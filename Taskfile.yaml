@@ -15,20 +15,20 @@ tasks:
     deps:
       - task: update-version-file
     cmds:
-      - task: build-{{project.name}}
+      - task: build-pg-log-analyzer
 
   clean:
     desc: Cleans up build artifacts
     preconditions:
       - test -d ./dist
-      - test -f ./dist/{{project.name}}
+      - test -f ./dist/pg-log-analyzer
     cmds:
-      - rm -f ./dist/{{project.name}}
+      - rm -f ./dist/pg-log-analyzer
 
   lint:
     cmds:
       - task: lint-dotenv
-      - task: lint-{{project.name}}
+      - task: lint-pg-log-analyzer
 
   update-version-file:
     vars:
@@ -48,7 +48,7 @@ tasks:
     cmds:
       - dotenv-linter {{.DOTENV_FILES}}
 
-  lint-{{project.name}}:
+  lint-pg-log-analyzer:
     internal: true
     vars:
       GO_SRC_DIRS:
@@ -59,8 +59,8 @@ tasks:
     cmds:
       - golangci-lint run {{.GO_SRC_DIRS}}
 
-  build-{{project.name}}:
-    desc: Builds {{project.name}} binary
+  build-pg-log-analyzer:
+    desc: Builds pg-log-analyzer binary
     vars:
       GIT_COMMIT:
         sh: git log -n 1 --format=%h
@@ -70,10 +70,10 @@ tasks:
       - './internal/**/*.go'
       - './main.go'
     generates:
-      - ./dist/{{project.name}}
+      - ./dist/pg-log-analyzer
     cmds:
       - mkdir -p ./dist
-      - go build -trimpath -ldflags="-s -w -X main.Version={{.VERSION}}-{{.GIT_COMMIT}}" -o dist/{{project.name}} .
+      - go build -trimpath -ldflags="-s -w -X main.Version={{.VERSION}}-{{.GIT_COMMIT}}" -o dist/pg-log-analyzer .
 
   release:
     desc: Creates a new snapshot release
