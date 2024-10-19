@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 )
@@ -57,6 +58,7 @@ func main() {
 	}
 
 	groupBySourceCodeLocation(entries)
+	// displayQueryOptimizationSuggestions(entries)
 }
 
 // parseLine parses a single line from the log file into a LogEntry.
@@ -105,13 +107,41 @@ func groupBySourceCodeLocation(entries []LogEntry) {
 		times[entry.SourceCodeLocation] += float64(time.Abs().Milliseconds())
 	}
 
-	fmt.Println("SourceCodeLocation counts:")
-	for location, count := range counts {
-		average := times[location]
-		ms := average / float64(count)
+	// sort by location name (alpha sort):
+	sortedLocations := make([]string, 0, len(counts))
 
-		if (count >= 200 || ms >= 10.5) && !strings.HasPrefix(location, "unknown:") {
-			fmt.Printf("    %s (count: %d, mean time: %0.4f ms, total time: %0.0f ms)\n", location, count, ms, average)
+	for location, _ := range counts {
+		sortedLocations = append(sortedLocations, location)
+	}
+
+	sort.Strings(sortedLocations)
+
+	fmt.Println("SourceCodeLocation counts:")
+	// for location, count := range counts {
+	for _, location := range sortedLocations {
+		count := counts[location]
+		ms := times[location]
+		average := ms / float64(count)
+
+		if (count >= 750 || average >= 30.0) && !strings.HasPrefix(location, "unknown:") {
+			fmt.Printf("    %s (count: %d, mean time: %0.4f ms, total time: %0.0f ms)\n", location, count, average, ms)
 		}
 	}
 }
+
+// func displayQueryOptimizationSuggestions(entries []LogEntry) {
+// 	queries, err := pgstat.ConnectAndFetchPgStatStatements(pgstat.BuildPostgresDsn("localhost", 5432, "root", "password", "database"))
+// 	if err != nil {
+// 		fmt.Printf("Error fetching pg_stat_statements: %v\n", err)
+// 		return
+// 	}
+
+// 	suggestions := pgstat.AnalyzeQueries(queries)
+
+// 	fmt.Println("\nOptimization suggestions:")
+// 	for _, suggestion := range suggestions {
+// 		fmt.Printf("    QueryID: %d\n", suggestion.QueryID)
+// 		fmt.Printf("    Query: %s\n", suggestion.Query)
+// 		fmt.Printf("    Suggestions: %v\n", suggestion.Suggestions)
+// 	}
+// }
